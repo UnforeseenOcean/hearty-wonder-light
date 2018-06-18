@@ -1,0 +1,28 @@
+{
+	"name": "hearty-wonder-light",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://archive.eldergods.com/hearty-wonder-light"
+	},
+	"keywords": [],
+	"author": "jauntywunderkind",
+	"license": "MIT",
+	"module": "hearty-wonder-light.js",
+	"esm": true,
+	"@std/esm": {
+		"cjs": {
+			"namedExports": true
+		}
+	},
+	"dependencies": {
+		"delay": "^3.0.0",
+		"i2c": "^0.2.3",
+		"i2c-bus": "^3.2.0"
+	}
+}
