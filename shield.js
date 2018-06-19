@@ -1,18 +1,9 @@
 import * as i2c from "i2c-bus"
 import { promisify} from "util"
 
-const openI2c= promisify( i2c.open)
+import { makeMcpChannel } from "./mcp-channel"
 
-export const defaults= {
-	busNumber: 0,
-	busOptions: null,
-	i2c: async function(){
-		return openI2c( this.busNumber, this.busOptions)
-	},
-	pcaAddress: 0x60,
-	mcpAddress: 0x40,
-	tmpAddress: 0x4C
-}
+const openI2c= promisify( i2c.open)
 
 function promisize( fns, o){
 	for( const fn of fns){
@@ -37,6 +28,29 @@ function err(msg, o){
 	return err
 }
 
+export function makeMcpChannels(){
+	return [
+	  this._makeMcpChannel(),
+	  this._makeMcpChannel(),
+	  this._makeMcpChannel(),
+	  this._makeMcpChannel()
+	]
+}
+
+// defaults starting with _ are expected to only be used during the constructor, although they are saved on the HPLedShield
+export const defaults= {
+  _busNumber: 0,
+  _busOptions: null,
+  i2c: async function(){
+  	return openI2c( this.busNumber, this.busOptions)
+  },
+  pcaAddress: 0x60,
+  mcpAddress: 0x40,
+  tmpAddress: 0x4C,
+  _makeMcpChannel: makeMcpChannel,
+  mcp: makeMcpChannels,
+  mcpEp: makeMcpChannels
+}
 export class HPLedShield{
 	static get defaults(){
 		return defaults
@@ -47,17 +61,14 @@ export class HPLedShield{
 	}
 	constructor( opts){
 		const _defaults= opts&& opts.defaults!== undefined? opts.defaults|| defaults
-		const opts= Object.assign( {}, {
-		  // Ep == eeprom
-		  intVref: []
-		  intVrefEp: [],
-		  gain: [],
-		  gainEp: [],
-		  powerDown: [],
-		  powerDownEp: [],
-		  values: []
-		  valuesEp: []
-		}, _defaults, opts)
+		const opts= Object.assign( {}, _defaults, opts)
+		if( this.mcp instanceof Function){
+			this.mcp= this.mcp()
+		}
+		if( this.mcpEp instanceof Function){
+			this.mcpEp= this.mcpEp()
+		}
+
 		// warning: we will concretize this i2c member when it resolves!!
 		this.i2c= i2c.call( opts) // get bus
 		  .then( promisizeI2c) // promisify
@@ -112,23 +123,18 @@ export class HPLedShield{
 		  loByte= buffer.read( 2),
 	      isEEPROM= (deviceId & 0B00001000) >> 3,
     	  channel= (deviceId & 0B00110000) >> 4
-		if (isEEPROM) {
-			this.intVrefEp[ channel] = (hiByte & 0B10000000) >> 7
-			this.gainEp[ channel] = (hiByte & 0B00010000) >> 4
-			this.powerDownEp[ channel] = (hiByte & 0B01100000) >> 5
-			this.valuesEp[ channel] = ((hiByte & 0B00001111)<<8)+loByte
-		}
-		else {
-			this.intVref[ channel] = (hiByte & 0B10000000) >> 7
-			this.gain[ channel] = (hiByte & 0B00010000) >> 4
-			this.powerDown[ channel] = (hiByte & 0B01100000) >> 5
-			this.values[ channel] = ((hiByte & 0B00001111)<<8)+loByte
-		}
+		  mcpChannel= this[ isEEPROM]? this.mcpEp: this.mcp][ channel],
+		mcpChannel.intVref=( hiByte & 0B10000000) >> 7
+		mcpChannel.gain=( hiByte & 0B00010000) >> 4
+		mcpChannel.powerDown=( hiByte & 0B01100000) >> 5
+		mcpChannel.values=(( hiByte & 0B00001111) <<8)+ loByte
 	}
-	async resetMode(){
+	resetMode(){
 		for(  channel= 0; i<= 3; ++i){
-			this.intVref[ channel= 1 // internal ref voltage, 2.048V
-			this.chain[ channel]
+			const mcpChannel= this.mcp[ channel]
+			mcpChannel.intVref= 1 // internal 2.048V reference
+			mcpChannel.gain= 0 // x1
+			mcpChannel.powerDown= 0 // regular running mode
 		}
 	}
 }
