@@ -3,6 +3,7 @@ export const defaults= {
   intVref: 1,
   gain: 0,
   powerDown: 0,
+  values: 0,
   eeprom: false
 }
 

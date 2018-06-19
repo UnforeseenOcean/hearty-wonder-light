@@ -137,7 +137,7 @@ export class HPLedShield{
 			mcpChannel.powerDown= 0 // regular running mode
 		}
 	}
-	fastWriteMcp( mcpAddr= this.mcpAddr){
+	async fastWriteMcp( mcpAddr= this.mcpAddr){
 		const buffer= Buffer.alloc( 8)
 		let offset= 0;
 		for( let i= 0; i< 4; ++i){
@@ -146,6 +146,12 @@ export class HPLedShield{
 			offset+= 2
 		}
 		return this.i2c.i2cWrite( mcpAddr, 8, buffer)
+	}
+	static get bufWakePca(){
+		return Buffer.from([ 0x0, 0B00100001])
+	}
+	async wakePca( mcpAddr= this.mcpAddr){
+		return this.i2c.i2cWrite( mcpAddr, 2, HPLedShield.bufWakePca)
 	}
 }
 export default HPLedShield
