@@ -1,6 +1,7 @@
 import { readFile as ReadFile} from "fs"
 import { promisify} from "util"
 import HeartyPatch from "../heartypatch"
+import log from "../util/log"
 
 const readFile= promisify( ReadFile)
 
@@ -11,7 +12,7 @@ export async function main( file= process.env.HEARTY_INPUT_FILE|| process.argv[ 
 	const
 	  buffer= await readFile( file),
 	  {pos, packets}= HeartyPatch.parsePackets( buffer)
-	console.log( JSON.stringify(packets))
+	packets.forEach( packet=> log(()=> packet))
 	console.log( pos, buffer.length)
 	return packets
 }
