@@ -1,17 +1,13 @@
 import * as i2c from "i2c-bus"
 import { promisify} from "util"
 
-import { makeMcpChannel } from "./mcp-channel"
+import cieLookup from "./cie-lookup.js"
+import { makeMcpChannel } from "./mcp-channel.js"
+import promisize from "./util/promisize.js"
+import err from "./util/err.js"
 
 const openI2c= promisify( i2c.open)
 
-function promisize( fns, o){
-	for( const fn of fns){
-		// indeed promisified methods still pass through `this`:
-		// https://mobile.twitter.com/rektide/status/1008862753535164416
-		obj[ fn]= promisify( obj[ fn])
-	}
-}
 const promisizeI2c= promisize.bind(undefined, ["i2cFuncs", "scan", "deviceId", "i2cRead", "i2cWrite"])
 
 async function validateI2c( i2c){
@@ -20,12 +16,6 @@ async function validateI2c( i2c){
 		throw new Error( "Unexpected non-i2c bus")
 	}
 	return i2c
-}
-
-function err(msg, o){
-	const err= new Error( msg)
-	Object.assign( err, o)
-	return err
 }
 
 export function makeMcpChannels(){
@@ -42,7 +32,7 @@ export const defaults= {
   _busNumber: 0,
   _busOptions: null,
   i2c: async function(){
-  	return openI2c( this.busNumber, this.busOptions)
+	return openI2c( this._busNumber, this._busOptions)
   },
   pcaAddress: 0x60,
   mcpAddress: 0x40,
@@ -61,7 +51,7 @@ export class HPLedShield{
 	}
 	constructor( opts){
 		const _defaults= opts&& opts.defaults!== undefined? opts.defaults|| defaults
-		const opts= Object.assign( {}, _defaults, opts)
+		Object.assign( {}, _defaults, opts)
 		if( this.mcp instanceof Function){
 			this.mcp= this.mcp()
 		}
@@ -75,6 +65,7 @@ export class HPLedShield{
 		  .then( validateI2c) // this isn't a smbus right?
 		  .then( this.loadDevices.bind(this))
 		  .then( i2c=> this.i2c= i2c) // bus is now ready; concretize assignment
+		return this // why? a long time ago i would do this
 	}
 
 	async loadDevices(){
@@ -176,6 +167,31 @@ export class HPLedShield{
 		// i'mma gonna quote this one: "second order polynomial fitting to the curve (freq vs DAC steps)"
 		this.mcp[ 0].values= Number.parseInt(( 0.0001787* freq* freq)+( 0.56895* freq)+ 8.0598)
 		return this.fastWriteMcp( mcpAddr)
+	}
+	async goToRGB( r, g, b, pcaAddr= this.pcaAddr){
+		return this.pcaPwm( cieLookup(r), cieLookup(g), cieLookup(b))
+	}
+	async pcaPwm( r, g, b, pcaAddr= this.pcaAddr){
+		const buffer= Buffer.from([
+		  6, // "start from channel 0 ON"
+		  0, // set all ON time to 0
+		  0,
+		  255, // placeholder r low-byte
+		  255,
+		  0,
+		  0,
+		  255, // placeholder g
+		  255,
+		  0,
+		  0,
+		  255, // placeholder b
+		  255,
+		  0,
+		  0 ])
+		buffer.writeInt16LE( r, 3)
+		buffer.writeInt16LE( g, 7)
+		buffer.writeInt16LE( b, 11)
+		return this.i2c.i2cWrite( pcaAddr, 13, buffer)
 	}
 }
 export default HPLedShield
