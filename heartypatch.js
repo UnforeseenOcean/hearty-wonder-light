@@ -126,7 +126,7 @@ export class HeartyPatch{
 		let samples= new Array(8)
 		for( let i= 0; i< 8; ++i){
 			const sampleOffset= (i* 4)+ 16+ offset
-			samples[ i]= buffer.readUInt32LE( sampleOffset)
+			samples[ i]= buffer.readInt32LE( sampleOffset)
 		}
 		const packet= {
 		  payloadSize: buffer.readUInt16LE( 2),
