@@ -172,5 +172,10 @@ export class HPLedShield{
 		}
 		return this.fastWriteMcp( mcpAddr)
 	}
+	async setFreq( freq, mcpAddr= this.mcpAddr){
+		// i'mma gonna quote this one: "second order polynomial fitting to the curve (freq vs DAC steps)"
+		this.mcp[ 0].values= Number.parseInt(( 0.0001787* freq* freq)+( 0.56895* freq)+ 8.0598)
+		return this.fastWriteMcp( mcpAddr)
+	}
 }
 export default HPLedShield
