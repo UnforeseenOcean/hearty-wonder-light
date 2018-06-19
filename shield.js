@@ -107,7 +107,7 @@ export class HPLedShield{
 	async begin(){
 		await this.getStatus()
 		await this.resetMode()
-		await this.writeMcp()
+		await this.fastWriteMcp()
 		await this.wakePca()
 	}
 	async getStatus( mcpAddr= this.mcpAddr){
@@ -136,6 +136,16 @@ export class HPLedShield{
 			mcpChannel.gain= 0 // x1
 			mcpChannel.powerDown= 0 // regular running mode
 		}
+	}
+	fastWriteMcp( mcpAddr= this.mcpAddr){
+		const buffer= Buffer.alloc( 8)
+		let offset= 0;
+		for( let i= 0; i< 4; ++i){
+			const mcpChannel= this.mcp[ i]
+			buffer.writeInt16BE( mcpChannel.values, offset)
+			offset+= 2
+		}
+		return this.i2c.i2cWrite( mcpAddr, 8, buffer)
 	}
 }
 export default HPLedShield
