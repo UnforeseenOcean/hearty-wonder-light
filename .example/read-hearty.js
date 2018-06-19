@@ -4,14 +4,16 @@ import HeartyPatch from "../heartypatch"
 
 const readFile= promisify( ReadFile)
 
+process.on( "unhandledRejection", console.error)
+
 export async function main( file= process.env.HEARTY_INPUT_FILE|| process.argv[ 2]|| "hearty.data"){
 	console.log({file})
 	const
 	  buffer= await readFile( file),
-	  packet= HeartyPatch.parsePacket( buffer)
-	console.log( JSON.stringify(packet))
-	console.log( buffer.length)
-	return packet
+	  {pos, packets}= HeartyPatch.parsePackets( buffer)
+	console.log( JSON.stringify(packets))
+	console.log( pos, buffer.length)
+	return packets
 }
 export default main
 

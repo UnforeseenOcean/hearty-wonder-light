@@ -1,9 +1,7 @@
 import Defer from "deferrant/deferrant.js"
 import { createConnection} from "net"
-import { performance } from "perf_hooks"
 import err from "./util/err"
-
-const now = performance.now()
+import log from "./util/log"
 
 export async function createHeartyConnection(){
 	const
@@ -42,7 +40,7 @@ export class HeartyPatch{
 	}
 	async connect(){
 		if( this.socket){
-			console.warn("HeartyPatch#connect when already connected")
+			log(()=> ({ "warn": "HeartyPatch#connect when already connected"}))
 			return this
 		}
 		this.socket= await createHeartyConnection()
@@ -60,9 +58,9 @@ export class HeartyPatch{
 		}
 	}
 	heartyListener( buffer){
-		console.log( `  @${now()} got data [len:${buffer.length}]`)
+		log(()=> ({ state: "data", len: buffer.length }))
 		if( this.remainder){
-			console.log(JSON.stringify({ state: "remainder", remainder: this.remainder.length, buffer: this.buffer.length}))
+			log(()=> ({ state: "remainder", remainder: this.remainder.length, buffer: this.buffer.length}))
 			buffer= Buffer.concat([ this.remainder, buffer])
 		}
 		this.remainder= buffer
@@ -70,24 +68,34 @@ export class HeartyPatch{
 		if( pos=== this.remainder.length){
 			delete this.remainder
 		}else{
-			console.log(JSON.stringify({ state: "remaining", pos, batch: this.remainder.length, left: this.remainder.length- pos }))
+			log(()=> ({ state: "remaining", pos, batch: this.remainder.length, left: this.remainder.length- pos }))
 			this.remainder= this.remainder.splice( pos)
 		}
-		console.log(JSON.stringify({ state: "queue", count: this.packets.length }))
+		log(()=> ({ state: "queue", count: this.packets.length }))
 		this.queue.push( ...packets)
 		this.next.resolve()
 	}
 	static parsePackets( buffer, pos= 0){
 		const packets= []
-		let size= 64
-		while( this.buffer.length>= pos+ size){
-			console.log(JSON.stringify({ "state": "read-packet", pos}))
-			const packet= readPacket( buffer, pos)
+		let size= 54
+		while( buffer.length>= pos+ size){
+			//for( let i= 0; i<= 64; ++i){
+			//	const a= buffer.readUInt8( i+ pos)
+			//	if(a === 10){
+			//		log(()=> ({a: 10, i, pos, n: i+pos, fa: buffer.readUInt8( i+ pos+ 1)}))
+			//	}
+			//}
+
+			log(()=> ({ "state": "read-packet", pos}))
+			const packet= this.parsePacket( buffer, pos)
+			log(()=> ({packet}))
 			packets.push( packet)
 			if( packet.endByte!= 54){
-				console.log(JSON.stringify({ "unexpected": "packet-end", endByte: packet.endByte}))
+				log(()=> ({ "unexpected": "packet-end", endByte: packet.endByte}))
 			}
-			pos+= size
+			pos+= packet.endByte+ 1
+			log(()=> ({ state: "iter", buflen: buffer.length, pos, size, n: pos+size }))
+			log(()=> ({}))
 		}
 		return {packets, pos}
 	}
