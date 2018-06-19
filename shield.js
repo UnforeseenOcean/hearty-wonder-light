@@ -163,12 +163,12 @@ export class HPLedShield{
 				throw err(`Non-number '${value}' on channel ${channel}`, {value, channel});
 			}
 			if( val< 0){
-				throw err(`Unexpected value ${value} was < 0`)
+				throw err(`Unexpected value ${value} was < 0`, {value, channel})
 			}
 			if( val> 255){
-				throw err(`Unexpected value ${value} was > 255`)
+				throw err(`Unexpected value ${value} was > 255`, {value, channel})
 			}
-			this.mcp[ i].values= Number.parseInt(value * this.constructor.senseRMcp * 20)
+			this.mcp[ i+ 1].values= Number.parseInt(value * this.constructor.senseRMcp * 20)
 		}
 		return this.fastWriteMcp( mcpAddr)
 	}
