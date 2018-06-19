@@ -50,7 +50,7 @@ export class HPLedShield{
 		return defaults
 	}
 	constructor( opts){
-		const _defaults= opts&& opts.defaults!== undefined? opts.defaults|| defaults
+		const _defaults= opts&& opts.defaults!== undefined? opts.defaults: defaults
 		Object.assign( {}, _defaults, opts)
 		if( this.mcp instanceof Function){
 			this.mcp= this.mcp()
@@ -109,9 +109,9 @@ export class HPLedShield{
 			throw err(`Unexpected ${bytesRead} bytes read from mcpStatus, expected 24`, {bytesRead, expected: 24, device: "mcp", read: "status"})
 		}
 		const
-		  deviceId = buffer.readInt8( 0),
-		  hiByte= buffer.read( 1),
-		  loByte= buffer.read( 2),
+		  deviceId = buffer.readUInt8( 0),
+		  hiByte= buffer.readUInt8( 1),
+		  loByte= buffer.readUInt8( 2),
 	      isEEPROM= (deviceId & 0B00001000) >> 3,
     	  channel= (deviceId & 0B00110000) >> 4
 		  mcpChannel= this[ isEEPROM]? this.mcpEp: this.mcp][ channel],
@@ -133,7 +133,7 @@ export class HPLedShield{
 		let offset= 0;
 		for( let i= 0; i< 4; ++i){
 			const mcpChannel= this.mcp[ i]
-			buffer.writeInt16BE( mcpChannel.values, offset)
+			buffer.writeUInt16BE( mcpChannel.values, offset)
 			offset+= 2
 		}
 		return this.i2c.i2cWrite( mcpAddr, 8, buffer)
@@ -188,9 +188,9 @@ export class HPLedShield{
 		  255,
 		  0,
 		  0 ])
-		buffer.writeInt16LE( r, 3)
-		buffer.writeInt16LE( g, 7)
-		buffer.writeInt16LE( b, 11)
+		buffer.writeUInt16LE( r, 3)
+		buffer.writeUInt16LE( g, 7)
+		buffer.writeUInt16LE( b, 11)
 		return this.i2c.i2cWrite( pcaAddr, 13, buffer)
 	}
 }
