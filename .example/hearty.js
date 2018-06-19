@@ -5,7 +5,7 @@ import log from "../util/log"
 process.on( "unhandledRejection", console.error)
 
 export async function main( file= process.env.HEARTY_INPUT_FILE|| process.argv[ 2]|| "hearty.data"){
-	const hearty= HeartyPatch()
+	const hearty= new HeartyPatch()
 	hearty.connect()
 	for await( const packet of hearty){
 		log(()=> packet)

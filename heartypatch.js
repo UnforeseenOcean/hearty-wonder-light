@@ -1,4 +1,4 @@
-import Defer from "deferrant/deferrant.js"
+import Defer from "p-defer"
 import { createConnection} from "net"
 import err from "./util/err"
 import log from "./util/log"
@@ -8,7 +8,7 @@ export async function createHeartyConnection(){
 	  d= Defer(),
 	  socket= createConnection(4567, "heartypatch.local", d.resolve)
 	socket.once( "error", d.reject)
-	return d
+	return d.promise
 }
 
 export const defaults= {
@@ -36,7 +36,7 @@ export class HeartyPatch{
 		}
 		this.next= Defer()
 		this.queue= []
-		this.dataListener= this.dataListener.bind()
+		this.heartyListener= this.heartyListener.bind()
 	}
 	async connect(){
 		if( this.socket){
@@ -52,7 +52,7 @@ export class HeartyPatch{
 			while( this.queue.length){
 				yield this.queue.shift()
 			}
-			var next= this.next()
+			var next= this.next.promise
 			this.next= Defer();
 			await next
 		}

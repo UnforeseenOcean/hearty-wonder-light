@@ -21,9 +21,9 @@
 		}
 	},
 	"dependencies": {
-		"deferrant": "^1.2.0",
 		"delay": "^3.0.0",
 		"esm": "^3.0.51",
-		"i2c-bus": "^3.2.0"
+		"i2c-bus": "^3.2.0",
+		"p-defer": "^1.0.0"
 	}
 }
