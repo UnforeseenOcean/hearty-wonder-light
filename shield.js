@@ -151,7 +151,26 @@ export class HPLedShield{
 		return Buffer.from([ 0x0, 0B00100001])
 	}
 	async wakePca( mcpAddr= this.mcpAddr){
-		return this.i2c.i2cWrite( mcpAddr, 2, HPLedShield.bufWakePca)
+		return this.i2c.i2cWrite( mcpAddr, 2, this.constructor.bufWakePca)
+	}
+	static get senseRMcp(){
+	}
+	async setCurrent( r, g, b, mcpAddr= this.mcpAddr){
+		const _values= [r, g, b]
+		for( let channel= 0; i<= 2; ++i){
+			let value= _values[ channel]
+			if( isNaN( value)){
+				throw err(`Non-number '${value}' on channel ${channel}`, {value, channel});
+			}
+			if( val< 0){
+				throw err(`Unexpected value ${value} was < 0`)
+			}
+			if( val> 255){
+				throw err(`Unexpected value ${value} was > 255`)
+			}
+			this.mcp[ i].values= Number.parseInt(value * this.constructor.senseRMcp * 20)
+		}
+		return this.fastWriteMcp( mcpAddr)
 	}
 }
 export default HPLedShield
